@@ -1,13 +1,15 @@
 const amqp = require('amqplib');
-const { Pool } = require('pg');
+const mysql = require('mysql2/promise');
 
 // 1. Setup Database Connection
-const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'user',
-  password: process.env.DB_PASSWORD || 'user123',
+const pool = mysql.createPool({
+  host: process.env.DB_HOST || 'mysql',
+  user: process.env.DB_USER || 'app_user',
+  password: process.env.DB_PASSWORD || 'app_password',
   database: process.env.DB_NAME || 'notifications_db',
-  port: 5432,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
 // 2. Helper to replace placeholders (e.g., "Hi {name}" -> "Hi John")
@@ -40,16 +42,16 @@ const startConsumer = async () => {
         console.log('Received Task:', content);
 
         try {
-          // Fetch Template from DB
-          const res = await pool.query('SELECT * FROM notification_templates WHERE id = $1', [content.templateId]);
+          // Fetch Template from DB (MySQL uses ? for placeholders)
+          const [rows] = await pool.query('SELECT * FROM notification_templates WHERE id = ?', [content.templateId]);
           
-          if (res.rows.length === 0) {
+          if (rows.length === 0) {
             console.error(`Template ID ${content.templateId} not found`);
             channel.ack(msg); // Ack anyway so we don't loop forever
             return;
           }
 
-          const template = res.rows[0];
+          const template = rows[0];
           
           // Render the final message
           const { subject, body } = renderTemplate(template, content.params);

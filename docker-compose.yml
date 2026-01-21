@@ -1,24 +1,26 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:15-alpine
+  mysql:
+    image: mysql:8.0
     container_name: notification_db
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: user123
-      POSTGRES_DB: notifications_db
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: notifications_db
+      MYSQL_USER: app_user
+      MYSQL_PASSWORD: app_password
     ports:
-      - "5432:5432"
+      - "3306:3306"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d notifications_db"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "app_user", "-papp_password"]
       interval: 10s
       timeout: 5s
       retries: 5
     restart: always
+
   api:
     build:
       context: .
@@ -29,15 +31,15 @@ services:
       - "5000:8080"
     environment:
       # Database Settings
-      DB_HOST: postgres
-      DB_USER: user
-      DB_PASSWORD: user123
+      DB_HOST: mysql
+      DB_USER: app_user
+      DB_PASSWORD: app_password
       DB_NAME: notifications_db
       PORT: 8080
-      # RabbitMQ Settings (This is the missing link!)
+      # RabbitMQ Settings
       MQ_URL: amqp://guest:guest@rabbitmq:5672
     depends_on:
-      postgres:
+      mysql:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
@@ -49,19 +51,18 @@ services:
       dockerfile: Dockerfile.consumer
     container_name: notification_consumer
     environment:
-      DB_HOST: postgres
-      DB_USER: user
-      DB_PASSWORD: user123
+      DB_HOST: mysql
+      DB_USER: app_user
+      DB_PASSWORD: app_password
       DB_NAME: notifications_db
       MQ_URL: amqp://guest:guest@rabbitmq:5672
     depends_on:
-      postgres:
+      mysql:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
     restart: always
 
-    
   rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: notification_mq
@@ -79,4 +80,4 @@ services:
     restart: always
 
 volumes:
-  postgres_data:
+  mysql_data:

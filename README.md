@@ -66,6 +66,6 @@ docker-compose exec api npm test
   "params": {
     "name": "User Name"
   }
-}
+
 ```
 - Success Response: 202 Accepted
