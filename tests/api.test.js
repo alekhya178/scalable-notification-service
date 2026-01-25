@@ -3,9 +3,11 @@ const express = require('express');
 const templateRoutes = require('../src/api/routes/templateRoutes');
 const notificationRoutes = require('../src/api/routes/notificationRoutes');
 
-// Mock the dependencies so we don't need real DB or RabbitMQ for unit tests
+// --- FIXED MOCK FOR MYSQL ---
+// MySQL2 returns an array: [rows, fields]
+// We mock the return value as [ [], undefined ] so destructuring works
 jest.mock('../src/api/config/db', () => ({
-  query: jest.fn().mockResolvedValue({ rows: [] })
+  query: jest.fn().mockResolvedValue([ [] ]) 
 }));
 
 jest.mock('../src/api/services/rabbitmqService', () => ({

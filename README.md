@@ -1,18 +1,18 @@
 # Scalable Notification Service
 
-A robust, event-driven notification system built with Node.js, Express, RabbitMQ, and PostgreSQL. This project demonstrates microservices architecture by decoupling the API (producer) from the notification processing (consumer) using a message queue.
+A robust, event-driven notification system built with Node.js, Express, RabbitMQ, and MySQL. This project demonstrates microservices architecture by decoupling the API (producer) from the notification processing (consumer) using a message queue.
 
 ## 🚀 Architecture
 
 * **API Service:** RESTful API that accepts notification requests and pushes them to RabbitMQ.
 * **RabbitMQ:** Message broker that buffers tasks, ensuring reliability even under high load.
 * **Consumer Service:** Background worker that pulls messages, fetches templates from the DB, and simulates sending notifications.
-* **PostgreSQL:** Relational database storing notification templates.
+* **MySQL:** Relational database storing notification templates.
 
 ## 🛠️ Tech Stack
 * **Language:** JavaScript (Node.js)
 * **Containerization:** Docker & Docker Compose
-* **Database:** PostgreSQL
+* **Database:** MySQL
 * **Message Queue:** RabbitMQ
 * **Testing:** Jest & Supertest
 
@@ -45,27 +45,36 @@ docker-compose exec api npm test
 ```
 
 ## 📡 API Endpoints
-1. Get All Templates
-- URL: /api/templates
 
-- Method: GET
+### 1. Get All Templates
+* **URL:** `/api/templates`
+* **Method:** `GET`
+* **Success Response:** `200 OK`
+* **Response Example:**
+    ```json
+    [
+      {
+        "id": "1",
+        "name": "welcome-email",
+        "subject": "Welcome!",
+        "body": "Hi {name}...",
+        "type": "EMAIL"
+      }
+    ]
+    ```
 
-- Success Response: 200 OK
-
-2. Send Notification
-- URL: /api/notifications
-
-- Method: POST
-
-- Body:
-```bash
-{
-  "recipient": "user@example.com",
-  "type": "EMAIL",
-  "templateId": "1",
-  "params": {
-    "name": "User Name"
-  }
-
-```
-- Success Response: 202 Accepted
+### 2. Send Notification
+* **URL:** `/api/notifications`
+* **Method:** `POST`
+* **Body:**
+    ```json
+    {
+      "recipient": "user@example.com",
+      "type": "EMAIL",
+      "templateId": "1",
+      "params": {
+        "name": "User Name"
+      }
+    }
+    ```
+* **Success Response:** `202 Accepted`
